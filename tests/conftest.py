@@ -6,9 +6,56 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+from src.utils.html_report import write_html_report
+
+
+_TEST_RESULTS = {}
+_SESSION_STARTED_AT = 0.0
+
 
 def _is_truthy(value):
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def pytest_sessionstart(session):
+    global _SESSION_STARTED_AT
+    _TEST_RESULTS.clear()
+    _SESSION_STARTED_AT = time.perf_counter()
+
+
+def pytest_runtest_logreport(report):
+    result = _TEST_RESULTS.setdefault(
+        report.nodeid,
+        {"nodeid": report.nodeid, "outcome": None, "duration": 0.0, "message": ""},
+    )
+    result["duration"] += report.duration
+
+    if report.when == "call":
+        result["outcome"] = report.outcome
+    elif report.when == "setup" and report.outcome in {"failed", "skipped"}:
+        result["outcome"] = report.outcome
+    elif report.when == "teardown" and report.failed:
+        result["outcome"] = "failed"
+
+    if report.failed:
+        result["message"] = report.longreprtext
+    elif report.skipped and not result["message"]:
+        result["message"] = str(report.longrepr)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    elapsed = time.perf_counter() - _SESSION_STARTED_AT
+    results = [result for result in _TEST_RESULTS.values() if result["outcome"]]
+    summary = write_html_report(results, elapsed, Path("report") / "test_report.html")
+
+    terminal = session.config.pluginmanager.get_plugin("terminalreporter")
+    if terminal is not None:
+        terminal.write_sep("=", "BÁO CÁO TỶ LỆ KIỂM THỬ")
+        terminal.write_line(
+            f"Pass: {summary['passed']}/{summary['total']} "
+            f"({summary['pass_rate']:.2f}%) | Fail: {summary['failed']} | Skip: {summary['skipped']}"
+        )
+        terminal.write_line(f"HTML report: {summary['path']}")
 
 
 @pytest.fixture

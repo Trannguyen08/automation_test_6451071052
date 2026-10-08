@@ -50,6 +50,13 @@ src/utils/excel_reader.py         # Đọc dữ liệu Excel
 tests/test_login.py               # Test runner data-driven
 tests/conftest.py                 # Khởi tạo Chrome, delay, screenshot khi lỗi
 artifacts/screenshots/            # Ảnh chụp tự động khi test thất bại
+report/test_report.html           # Báo cáo HTML và tỷ lệ pass của lần chạy mới nhất
 ```
 
 Các ca kiểm thử dùng dữ liệu giả rõ ràng và không thử dò tài khoản thật.
+
+## Báo cáo kết quả
+
+Sau mỗi lần chạy, terminal hiển thị tỷ lệ pass theo phần trăm và báo cáo HTML
+được tạo tại `report/test_report.html`. Mở file này bằng trình duyệt để xem
+thống kê và kết quả chi tiết của từng test case.
