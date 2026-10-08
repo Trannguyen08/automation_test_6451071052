@@ -1,62 +1,44 @@
-# Automation test module đăng nhập UTC
+# Selenium Automation Test - UTC Login
 
-Bộ kiểm thử Selenium WebDriver bằng Python cho trang
-`https://vanphongdientu.utc.edu.vn/Login`.
+Kiểm thử module đăng nhập tại `https://vanphongdientu.utc.edu.vn/Login` bằng
+Python, Selenium WebDriver, pytest, Excel và Allure Report.
 
-## Công nghệ
+## Yêu cầu
 
-- Python 3.11+
-- Selenium WebDriver 4
-- pytest
-- openpyxl để đọc test case từ Excel
-- Page Object Model
+- Windows, Python 3.11+ và Google Chrome
+- Kết nối Internet trong lần chạy đầu tiên
 
-## Chạy và quan sát trên trình duyệt
+## Chạy project
 
-Trên Windows, nhấp đúp `run_tests.bat` hoặc chạy:
+Mở PowerShell tại thư mục project và chạy:
 
 ```powershell
 .\run_tests.bat
 ```
 
-Chrome được mở ở chế độ hiển thị mặc định. Selenium Manager tự tìm/tải driver
-phù hợp với Chrome. Có thể tăng thời gian quan sát từng thao tác:
+Script tự tạo môi trường Python, cài thư viện, mở Chrome để chạy test và tạo
+report tại `report/allure-report/index.html`.
 
-```powershell
-$env:ACTION_DELAY = "2"
-$env:BROWSER_CLOSE_DELAY = "3"
-.\run_tests.bat
-```
-
-Chạy một test case cụ thể:
+Chạy một test case hoặc chạy ẩn:
 
 ```powershell
 .\run_tests.bat -k TC_LOGIN_005
+$env:HEADLESS = "1"; .\run_tests.bat
 ```
 
-Chỉ khi cần chạy ẩn (ví dụ CI):
+Mở Allure report:
 
 ```powershell
-$env:HEADLESS = "1"
-.\run_tests.bat
+.\.tools\allure-2.46.1\bin\allure.bat open report\allure-report
 ```
 
-## Cấu trúc
+TC_LOGIN_007 cần tài khoản hợp lệ:
 
-```text
-test_cases/login_test_cases.xlsx  # Danh sách test case và expected result
-src/pages/login_page.py           # Page Object của màn hình đăng nhập
-src/utils/excel_reader.py         # Đọc dữ liệu Excel
-tests/test_login.py               # Test runner data-driven
-tests/conftest.py                 # Khởi tạo Chrome, delay, screenshot khi lỗi
-artifacts/screenshots/            # Ảnh chụp tự động khi test thất bại
-report/test_report.html           # Báo cáo HTML và tỷ lệ pass của lần chạy mới nhất
+```powershell
+$env:UTC_USERNAME = "tai_khoan_cua_ban"
+$env:UTC_PASSWORD = "mat_khau_cua_ban"
+.\run_tests.bat -k TC_LOGIN_007
 ```
 
-Các ca kiểm thử dùng dữ liệu giả rõ ràng và không thử dò tài khoản thật.
-
-## Báo cáo kết quả
-
-Sau mỗi lần chạy, terminal hiển thị tỷ lệ pass theo phần trăm và báo cáo HTML
-được tạo tại `report/test_report.html`. Mở file này bằng trình duyệt để xem
-thống kê và kết quả chi tiết của từng test case.
+Test case nằm trong `test_cases/login_test_cases.xlsx`. Credential thật không
+được lưu trong Excel hoặc mã nguồn.

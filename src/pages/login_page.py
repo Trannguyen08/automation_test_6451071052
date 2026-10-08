@@ -1,6 +1,7 @@
 import time
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -14,6 +15,7 @@ class LoginPage:
     UTC_EMAIL_LOGIN = (By.CSS_SELECTOR, "a.button")
     SUBMIT = (By.CSS_SELECTOR, "input.submit_login")
     FORGOT_PASSWORD = (By.CSS_SELECTOR, ".helps a[href='/Login/GetPass']")
+    REMEMBER_LABEL = (By.CSS_SELECTOR, "label.check[for='persistent']")
 
     def __init__(self, driver, action_delay=0.8, timeout=10):
         self.driver = driver
@@ -50,6 +52,32 @@ class LoginPage:
     def login(self, username="", password=""):
         self.fill_credentials(username, password)
         self.submit()
+
+    def login_with_enter(self, username="", password=""):
+        self.fill_credentials(username, password)
+        self.element(self.PASSWORD).send_keys(Keys.ENTER)
+        self._pause()
+
+    def select_remember_me(self):
+        checkbox = self.element(self.REMEMBER)
+        if not checkbox.is_selected():
+            self.visible_element(self.REMEMBER_LABEL).click()
+            self._pause()
+        assert checkbox.is_selected()
+
+    def open_forgot_password(self):
+        self.visible_element(self.FORGOT_PASSWORD).click()
+        self.wait.until(EC.url_contains("/Login/GetPass"))
+        self._pause()
+
+    def open_utc_email_login(self):
+        self.visible_element(self.UTC_EMAIL_LOGIN).click()
+        self.wait.until(EC.url_contains("accounts.google.com"))
+        self._pause()
+
+    def wait_for_login_success(self):
+        self.wait.until(lambda driver: "/login" not in driver.current_url.lower())
+        self._pause()
 
     def wait_for_text(self, expected_text):
         self.wait.until(EC.text_to_be_present_in_element((By.TAG_NAME, "body"), expected_text))

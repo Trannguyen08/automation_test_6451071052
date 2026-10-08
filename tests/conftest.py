@@ -1,61 +1,36 @@
 import os
+import platform
 import time
 from pathlib import Path
 
+import allure
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-from src.utils.html_report import write_html_report
-
-
-_TEST_RESULTS = {}
-_SESSION_STARTED_AT = 0.0
+from src.pages.login_page import LoginPage
 
 
 def _is_truthy(value):
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
-def pytest_sessionstart(session):
-    global _SESSION_STARTED_AT
-    _TEST_RESULTS.clear()
-    _SESSION_STARTED_AT = time.perf_counter()
-
-
-def pytest_runtest_logreport(report):
-    result = _TEST_RESULTS.setdefault(
-        report.nodeid,
-        {"nodeid": report.nodeid, "outcome": None, "duration": 0.0, "message": ""},
-    )
-    result["duration"] += report.duration
-
-    if report.when == "call":
-        result["outcome"] = report.outcome
-    elif report.when == "setup" and report.outcome in {"failed", "skipped"}:
-        result["outcome"] = report.outcome
-    elif report.when == "teardown" and report.failed:
-        result["outcome"] = "failed"
-
-    if report.failed:
-        result["message"] = report.longreprtext
-    elif report.skipped and not result["message"]:
-        result["message"] = str(report.longrepr)
-
-
+@pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
-    elapsed = time.perf_counter() - _SESSION_STARTED_AT
-    results = [result for result in _TEST_RESULTS.values() if result["outcome"]]
-    summary = write_html_report(results, elapsed, Path("report") / "test_report.html")
-
-    terminal = session.config.pluginmanager.get_plugin("terminalreporter")
-    if terminal is not None:
-        terminal.write_sep("=", "BÁO CÁO TỶ LỆ KIỂM THỬ")
-        terminal.write_line(
-            f"Pass: {summary['passed']}/{summary['total']} "
-            f"({summary['pass_rate']:.2f}%) | Fail: {summary['failed']} | Skip: {summary['skipped']}"
-        )
-        terminal.write_line(f"HTML report: {summary['path']}")
+    allure_results = Path("report") / "allure-results"
+    allure_results.mkdir(parents=True, exist_ok=True)
+    (allure_results / "environment.properties").write_text(
+        "\n".join(
+            (
+                "Application=Văn phòng điện tử UTC",
+                f"Base.URL={LoginPage.URL}",
+                "Browser=Chrome",
+                f"Python={platform.python_version()}",
+                f"Operating.System={platform.platform()}",
+            )
+        ),
+        encoding="utf-8",
+    )
 
 
 @pytest.fixture
@@ -95,7 +70,14 @@ def pytest_runtest_makereport(item, call):
     if browser is None:
         return
 
+    screenshot = browser.get_screenshot_as_png()
+    allure.attach(
+        screenshot,
+        name=f"{item.name}-failure",
+        attachment_type=allure.attachment_type.PNG,
+    )
+
     screenshot_dir = Path("artifacts") / "screenshots"
     screenshot_dir.mkdir(parents=True, exist_ok=True)
-    browser.save_screenshot(str(screenshot_dir / f"{item.name}.png"))
+    (screenshot_dir / f"{item.name}.png").write_bytes(screenshot)
 

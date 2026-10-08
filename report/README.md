@@ -1,11 +1,19 @@
 # Báo cáo kiểm thử
 
-Sau mỗi lần chạy `pytest` hoặc `run_tests.bat`, báo cáo mới nhất được tạo tại:
+Sau mỗi lần chạy `run_tests.bat`, báo cáo Allure HTML được tạo tại:
 
 ```text
-report/test_report.html
+report/allure-report/        # Website báo cáo Allure
+report/allure-report/index.html
 ```
 
-Mở file HTML bằng trình duyệt để xem tỷ lệ pass, tổng số test, số test
-pass/fail/skip, thời gian chạy và kết quả chi tiết của từng test case.
+Thư mục `report/allure-results/` chỉ là dữ liệu trung gian và được tự động xóa
+sau khi Allure tạo báo cáo thành công. `report/allure-report/` không nằm trong
+`.gitignore`, vì vậy có thể được đưa vào Git khi cần.
+
+Allure CLI được cài cục bộ vào `.tools/` trong lần chạy đầu tiên. Mở báo cáo bằng:
+
+```powershell
+.\.tools\allure-2.46.1\bin\allure.bat open report\allure-report
+```
 
